@@ -48,6 +48,12 @@ class Creator:
         else:
             self.tokens = tokens
 
+    def save_monolingual(self, cz_path: str, en_path: str):
+        cz_tokens = self.tokens['CZ_tokens'].to_frame('tokens')
+        cz_tokens.to_csv(cz_path)
+        en_tokens = self.tokens['EN_tokens'].to_frame('tokens')
+        en_tokens.to_csv(en_path)
+
     def save_interleaves(self, path):
         tokens = self.interleave_tokens()
         tokens.to_csv(path)

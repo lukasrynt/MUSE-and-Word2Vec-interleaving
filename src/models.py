@@ -29,6 +29,12 @@ class W2V:
         values = pd.DataFrame(values.to_list(), columns=list(range(1, self.model.vector_size + 1)))
         return pd.concat([tokens, values], axis=1)
 
+    def save_vectors_for_muse(self, path) -> None:
+        with open(path, 'w') as f:
+            f.write(f'{0} {self.model.vector_size}\n')
+        tokens = self.get_vectors()
+        tokens.set_index('token').to_csv(path, header=False, sep=' ', mode='a')
+
     def get_vector(self, word) -> List[int]:
         return self.model.wv.get_vector(word)
 
