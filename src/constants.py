@@ -1,4 +1,4 @@
-MODELS_PATH = './models'
-DATA_PATH = './data'
-EMBEDDINGS_PATH = './embeddings'
-MUSE_EXEC_PATH = './MUSE/unsupervised.py'
+MODELS_PATH = 'models'
+DATA_PATH = 'data'
+MUSE_EXEC_PATH = 'MUSE/unsupervised.py'
+EMBEDDINGS_PATH = 'embeddings'
