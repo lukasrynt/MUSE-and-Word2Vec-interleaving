@@ -2,3 +2,4 @@ data/
 .ipynb_checkpoints/
 .idea
 models/
+src/__pycache__
