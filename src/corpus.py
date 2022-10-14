@@ -4,6 +4,8 @@ import os
 import pandas as pd
 from pathlib import Path
 
+from typing import List
+
 
 class Loader:
 
@@ -59,7 +61,7 @@ class Creator:
             .explode('data').to_frame(name='tokens')
 
     @staticmethod
-    def __interleave_words(sent1: list[str], sent2: list[str]) -> list[list]:
+    def __interleave_words(sent1: List[str], sent2: List[str]) -> List[list]:
         """
         Method for sequential interleaving of two sentences
         :param sent1: List of tokens in the first sentence

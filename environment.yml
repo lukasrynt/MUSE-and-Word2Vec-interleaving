@@ -1,0 +1,17 @@
+name: vylet
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.8
+- numpy
+- pandas
+- pip
+- pip:
+    - plotly
+    - pygame==2.0.0
+    - torch
+    - gensim
+    - faiss-cpu
+    - jupyter
+    - notebook

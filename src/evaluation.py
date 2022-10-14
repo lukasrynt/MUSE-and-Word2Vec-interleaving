@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.models import W2V
+from typing import List
 
 
 class Evaluator:
@@ -8,7 +9,7 @@ class Evaluator:
     def __init__(self, model: W2V):
         self.model = model
 
-    def all_tests(self, en_words: list[str], cz_words: list[str]) -> None:
+    def all_tests(self, en_words: List[str], cz_words: List[str]) -> None:
         en_words = self.__prefix_words(en_words, 'en')
         cz_words = self.__prefix_words(cz_words, 'cz')
         success_5 = 0
@@ -23,7 +24,7 @@ class Evaluator:
         print("P@5: ", success_5 / len(en_words))
         print("P@10:", success_10 / len(en_words))
 
-    def p_at_k_metric(self, en_words: list[str], cz_words: list[str], k: int = 5) -> float:
+    def p_at_k_metric(self, en_words: List[str], cz_words: List[str], k: int = 5) -> float:
         """
         Simplified P@k metric for measuring success of the model. For each word pair checks if the translation is
         within the top k neighbours. If it is - adds this to success counter. The resulting score is then calculated
@@ -60,5 +61,5 @@ class Evaluator:
         return df.head(top_k)
 
     @staticmethod
-    def __prefix_words(words: list[str], language: str) -> list[str]:
+    def __prefix_words(words: List[str], language: str) -> List[str]:
         return [f'{language}_{word}' for word in words]

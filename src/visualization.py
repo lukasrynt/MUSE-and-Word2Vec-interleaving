@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.manifold import TSNE
 import plotly.express as px
 from scipy.spatial import distance
+from typing import List
 
 from src.models import W2V
 from src.utils import series_to_arr
@@ -24,7 +25,7 @@ class Visualizer:
         representations = self.__tsne_reduce(reduced_df, perplexity)
         self.__visualize(representations)
 
-    def visualize_words(self, en_words: list, cz_words: list, perplexity: int = 30):
+    def visualize_words(self, en_words: List[str], cz_words: List[str], perplexity: int = 30):
         """
         Visualize the model representation reduced by the given list of tokens
         :param perplexity: Perplexity of t-SNE dimensionality reduction
@@ -36,7 +37,7 @@ class Visualizer:
         self.__visualize(representations)
 
     @staticmethod
-    def __get_frequencies_list(tokens: pd.DataFrame, col: str) -> list[str]:
+    def __get_frequencies_list(tokens: pd.DataFrame, col: str) -> List[str]:
         """
         Gets tokens in preferred language ordered by their frequencies
         :return:
@@ -96,7 +97,7 @@ class Visualizer:
         return pd.concat([tsne_df, df[['token', 'language']]], axis=1)
 
     @staticmethod
-    def __cosine_distance(vector1: list[float], vector2: list[float]) -> float:
+    def __cosine_distance(vector1: List[float], vector2: List[float]) -> float:
         """
         Calculates cosine distance between two vectors
         :param vector1: First vector representation
@@ -106,7 +107,7 @@ class Visualizer:
         return distance.cosine(vector1, vector2)
 
     @staticmethod
-    def __reduce_words(df: pd.DataFrame, en_words: list, cz_words: list) -> pd.DataFrame:
+    def __reduce_words(df: pd.DataFrame, en_words: List[str], cz_words: List[str]) -> pd.DataFrame:
         """
         Reduce tokens present in learned representations taken from W2V model by provided lists of tokens
         :param df: Learned representations of individual tokens taken from W2V model

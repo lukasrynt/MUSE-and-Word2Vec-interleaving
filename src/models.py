@@ -1,10 +1,10 @@
-import json
 import math
-import re
 
 import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec
+from typing import List
+
 from src.utils import series_to_arr
 
 
@@ -29,10 +29,10 @@ class W2V:
         values = pd.DataFrame(values.to_list(), columns=list(range(1, self.model.vector_size + 1)))
         return pd.concat([tokens, values], axis=1)
 
-    def get_vector(self, word) -> list[int]:
+    def get_vector(self, word) -> List[int]:
         return self.model.wv.get_vector(word)
 
-    def most_similar(self, vector: list[int] = None, word: str = None, **options):
+    def most_similar(self, vector: List[int] = None, word: str = None, **options):
         return self.model.wv.most_similar([vector or word], **options)
 
     def fit(self, df: pd.DataFrame) -> None:
@@ -75,3 +75,10 @@ class W2V:
 
     def save(self, path: str) -> None:
         self.model.save(path)
+
+
+class MUSE:
+
+    def __init__(self, en_model: W2V, cz_model: W2V):
+        self.en_model = en_model
+        self.cz_model = cz_model
