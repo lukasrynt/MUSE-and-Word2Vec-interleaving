@@ -1,36 +1,27 @@
-import models
+import pandas as pd
 
-def all_tests(model, en_words, cz_words, en_freqs):
-    distance_sum = 0
-    success_5 = 0
-    success_10 = 0
-    df = get_vector_representations(model)
-    all_en_words = en_freqs['Unnamed: 0'].values.tolist()
-    en_representations = df.loc[df['token'].isin(all_en_words)]
-    for i in range(len(en_words)):
-        cz_repr = get_single_representation(model, cz_words[i])
-        en_repr = get_single_representation(model, en_words[i])
-        distances = en_representations.apply(lambda x: cosine_distance(x[list(range(1, model.vector_size + 1))].tolist(), cz_repr), axis=1)
-        distances.rename('distances', inplace=True)
-        largest_dist = distances.max()
-        distance_sum += cosine_distance(en_repr, cz_repr) / largest_dist
-
-        merged = pd.concat([distances, en_representations], axis=1)
-        neighbors_5 = merged.nsmallest(5, 'distances')['token'].tolist()
-        neighbors_10 = merged.nsmallest(10, 'distances')['token'].tolist()
-        if en_words[i] in neighbors_5:
-            success_5 += 1
-        if en_words[i] in neighbors_10:
-            success_10 += 1
-    print("P@5:", success_5 / len(en_words))
-    print("P@10:", success_10 / len(en_words))
-    print("distance_sum:", distance_sum)
+from src.models import W2V
 
 
 class Evaluator:
 
-    def __init__(self, model: models.W2V):
+    def __init__(self, model: W2V):
         self.model = model
+
+    def all_tests(self, en_words: list[str], cz_words: list[str]) -> None:
+        en_words = self.__prefix_words(en_words, 'en')
+        cz_words = self.__prefix_words(cz_words, 'cz')
+        success_5 = 0
+        success_10 = 0
+        for i in range(len(en_words)):
+            most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=10)
+            if cz_words[i] in most_similar['token'].unique():
+                success_10 += 1
+            if cz_words[i] in most_similar['token'].head(5).unique():
+                success_5 += 1
+
+        print("P@5: ", success_5 / len(en_words))
+        print("P@10:", success_10 / len(en_words))
 
     def p_at_k_metric(self, en_words: list[str], cz_words: list[str], k: int = 5) -> float:
         """
@@ -43,21 +34,31 @@ class Evaluator:
         :param k:
         :return:
         """
+        en_words = self.__prefix_words(en_words, 'en')
+        cz_words = self.__prefix_words(cz_words, 'cz')
         success_count = 0
-        res = self.model.most_similar(word=en_words[0], topn=100)
-        res
-
-        df = get_vector_representations(self.model)
-        all_en_words = en_freqs['Unnamed: 0'].values.tolist()
-        en_representations = df.loc[df['token'].isin(all_en_words)]
         for i in range(len(en_words)):
-            cz_repr = get_single_representation(model, cz_words[i])
-            distances = en_representations \
-                .apply(lambda x: cosine_distance(x[list(range(1, model.vector_size + 1))].tolist(), cz_repr), axis=1)
-            distances.rename('distances', inplace=True)
-            merged = pd.concat([distances, en_representations], axis=1)
-            n_neighbors = merged.nsmallest(k, 'distances')['token'].tolist()
-            if en_words[i] in n_neighbors:
+            most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=k)
+            if cz_words[i] in most_similar['token'].unique():
                 success_count += 1
         return success_count / len(en_words)
 
+    def __get_most_similar_for(self, word: str, language: str, top_k: int) -> pd.DataFrame:
+        """
+        Gets k most similar words in other language
+        :param word: Word in one language to be found
+        :param language: Language symbol of the words that we are looking for
+        :param top_k: Defines how many words to retrieve
+        :return:
+        """
+        size = 0
+        df = pd.DataFrame()
+        while size < top_k:
+            df = pd.DataFrame(self.model.most_similar(word=word, topn=top_k * (2 + size)), columns=['token', 'dist'])
+            df = df[df['token'].str.contains(f'{language}_')]
+            size = df.size
+        return df.head(top_k)
+
+    @staticmethod
+    def __prefix_words(words: list[str], language: str) -> list[str]:
+        return [f'{language}_{word}' for word in words]
