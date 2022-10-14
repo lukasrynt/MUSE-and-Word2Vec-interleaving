@@ -1,13 +1,14 @@
 from corpus import Loader, Creator
+from src.models import W2V
 import pandas as pd
+
+from src.visualization import Visualizer
 
 
 def main():
-    # loader = Loader('../data/documents')
-    # loader.save_tokens('../data/tokens.csv')
-    df = pd.read_csv('../data/tokens.csv')
-    creator = Creator(tokens=df)
-    creator.save_interleaves('../data/interleaved.csv')
+    model = W2V(path='../models/interleaved')
+    vis = Visualizer(model, '../data/tokens.csv')
+    vis.visualize_most_frequent(limit=100)
 
 
 if __name__ == '__main__':

@@ -56,9 +56,10 @@ class Creator:
         :return: Dataframe with sequentially interleaved tokens
         """
         return self.tokens.apply(lambda x: self.__interleave_words(x['EN_tokens'], x['CZ_tokens']), axis=1) \
-            .explode('data')
+            .explode('data').to_frame(name='tokens')
 
-    def __interleave_words(self, sent1: list[str], sent2: list[str]) -> list[list]:
+    @staticmethod
+    def __interleave_words(sent1: list[str], sent2: list[str]) -> list[list]:
         """
         Method for sequential interleaving of two sentences
         :param sent1: List of tokens in the first sentence

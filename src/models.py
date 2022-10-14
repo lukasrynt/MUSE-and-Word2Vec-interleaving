@@ -5,24 +5,19 @@ import re
 import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec
-
-
-def series_to_arr(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Converts given dataframe with json values to dataframe containing individual tokens
-    :param df: Dataframe with json values
-    :return: Converted dataframes where row contains list of tokens
-    """
-    return df.apply(lambda x: json.loads(re.sub("\'", "\"", x['0'])), axis=1)
+from src.utils import series_to_arr
 
 
 class W2V:
 
-    def __init__(self, **options):
+    def __init__(self, path: str = None, **options):
         """
         Initializes embeddings
         """
-        self.model = Word2Vec(**options)
+        if path is not None:
+            self.model = Word2Vec.load(path)
+        else:
+            self.model = Word2Vec(**options)
 
     def get_vectors(self) -> pd.DataFrame:
         """
@@ -48,7 +43,7 @@ class W2V:
         split_by_iteration = 100000
         iterations = math.ceil(len(df) / split_by_iteration)
         for i in range(iterations):
-            print("Iteration {:d}/{:d}".format(i, iterations))
+            print(f'Iteration {i + 1}/{iterations}')
             self.continual_train_model(df, i)
 
     def continual_train_model(self, df: pd.DataFrame, iteration: int = 0, split_per_iteration: int = 100000) -> None:
@@ -77,3 +72,6 @@ class W2V:
         for g, partial_df in df.groupby(np.arange(len(df)) // batch_size):
             self.model.train(series_to_arr(partial_df),
                              total_examples=self.model.corpus_count, epochs=self.model.epochs)
+
+    def save(self, path: str) -> None:
+        self.model.save(path)
