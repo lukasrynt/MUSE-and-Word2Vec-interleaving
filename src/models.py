@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 from gensim.models import Word2Vec
 from typing import List
+import os
 
-from src.utils import series_to_arr
+from .utils import series_to_arr
 
 
 class W2V:
@@ -83,8 +84,12 @@ class W2V:
         self.model.save(path)
 
 
-class MUSE:
+class MUSE(W2V):
 
-    def __init__(self, en_model: W2V, cz_model: W2V):
-        self.en_model = en_model
-        self.cz_model = cz_model
+    def __init__(self, en_aligned: pd.DataFrame, cz_aligned: pd.DataFrame, vector_size: int):
+        super().__init__()
+        self.__append_vectors(en_aligned, vector_size)
+        self.__append_vectors(cz_aligned, vector_size)
+
+    def __append_vectors(self, vectors: pd.DataFrame, vector_size: int) -> None:
+        self.model.wv.add_vectors(vectors[0].tolist(), vectors[range(1, vector_size)].to_numpy())

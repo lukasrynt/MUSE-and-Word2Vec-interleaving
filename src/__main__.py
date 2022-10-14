@@ -1,14 +1,19 @@
-from corpus import Loader, Creator
-from src.models import W2V
-import pandas as pd
+from src.orchestration import Orchestrator
 
-from src.visualization import Visualizer
+en_words = ['access', 'authoris', 'capit', 'committe', 'consum', 'content', 'deadlin', 'document', 'expenditur',
+            'full', 'geograph', 'group', 'growth', 'hear', 'instrument', 'investig', 'label', 'list', 'loan',
+            'network', 'opinion', 'partnership', 'pension', 'price', 'sale', 'secret', 'solut', 'trade', 'type',
+            'wast']
+cz_words = ['přístup', 'povolen', 'kapitál', 'výbor', 'spotřebitel', 'obsah', 'lhůt', 'dokument', 'výdaj', 'pln',
+            'zeměpisn', 'skup', 'růst', 'slyšen', 'nástroj', 'šetřen', 'označen', 'seznam', 'úvěr', 'síť',
+            'stanovisk', 'partnerst', 'důchod', 'cen', 'prodej', 'tajemstv', 'řešen', 'obchod', 'typ', 'odpad']
 
 
 def main():
-    model = W2V(path='../models/interleaved')
-    vis = Visualizer(model, '../data/tokens.csv')
-    vis.visualize_most_frequent(limit=100)
+    orch = Orchestrator(en_words=en_words, cz_words=cz_words,
+                        muse_epoch_size=1, muse_epochs=5000,
+                        vector_sizes=[300], window_sizes=[6])
+    orch.run_all()
 
 
 if __name__ == '__main__':
