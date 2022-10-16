@@ -11,7 +11,7 @@ dependencies:
     - plotly
     - pygame==2.0.0
     - torch
-    - gensim
+    - gensim==4.2.0
     - faiss-cpu
     - jupyter
     - notebook
