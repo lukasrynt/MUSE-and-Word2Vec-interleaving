@@ -100,10 +100,12 @@ class MUSE(W2V):
         self.en_model = en_model
         self.cz_model = cz_model
 
-    def run_adversarial(self) -> None:
+    def run_adversarial(self, skip_new: bool = False) -> None:
         if not Path(self.__get_aligned_emb_path('cz')).exists() \
                 or not Path(self.__get_aligned_emb_path('en')).exists():
             cz_emb_path, en_emb_path = self.__get_monolingual_embeddings()
+            if skip_new:
+                return
             path = Path(self.__get_aligned_emb_dir_path())
             if path.exists():
                 shutil.rmtree(path)

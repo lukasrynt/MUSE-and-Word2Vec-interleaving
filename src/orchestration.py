@@ -58,10 +58,10 @@ class Orchestrator:
                           en_model=en_model, cz_model=cz_model,
                           model_config=self.model_config,
                           root_path=self.root_path)
+        muse_model.run_adversarial(skip_new=True)
         if self.skip_muse:
-            print("Skipping aligning vectors for now")
+            print("Skipping adversarial training")
             return
-        muse_model.run_adversarial()
         Evaluator(muse_model).all_tests(self.en_words, self.cz_words)
 
     @staticmethod
