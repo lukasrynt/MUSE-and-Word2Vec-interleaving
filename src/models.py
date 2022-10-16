@@ -89,9 +89,9 @@ class W2V:
 
 class MUSE(W2V):
 
-    def __init__(self, epoch_size: int, epochs: int,
-                 en_model: W2V, cz_model: W2V,
-                 model_config: dict, root_path: str = './'):
+    def __init__(self, en_model: W2V, cz_model: W2V,
+                 model_config: dict, epoch_size: int = 1_000_000,
+                 epochs: int = 5, root_path: str = './'):
         super().__init__()
         self.root_path = root_path
         self.model_config = model_config
@@ -132,7 +132,7 @@ class MUSE(W2V):
         return cz_emb_path, en_emb_path
 
     def __append_vectors(self, vectors: pd.DataFrame, vector_size: int) -> None:
-        self.model.wv.add_vectors(vectors[0].tolist(), vectors[range(1, vector_size)].to_numpy())
+        self.model.wv.add_vectors(vectors[0].tolist(), vectors[range(1, vector_size + 1)].to_numpy())
 
     def __load_aligned_embeddings(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         cz_aligned = pd.read_csv(self.__get_aligned_emb_path('cz'), sep=' ', skiprows=1, header=None)

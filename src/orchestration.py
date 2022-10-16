@@ -13,7 +13,8 @@ from .utils import form_model_name, rooted_path
 class Orchestrator:
 
     def __init__(self, vector_sizes: List[int], window_sizes: List[int], en_words: List[str], cz_words: List[str],
-                 muse_epochs: int = 5, muse_epoch_size: int = 1_000_000, root_path: str = './'):
+                 muse_epochs: int = 5, muse_epoch_size: int = 1_000_000, root_path: str = './',
+                 skip_muse: bool = False):
         self.vector_sizes = vector_sizes
         self.window_sizes = window_sizes
         self.en_words = en_words
@@ -22,6 +23,7 @@ class Orchestrator:
         self.muse_epoch_size = muse_epoch_size
         self.root_path = root_path
         self.model_config = {}
+        self.skip_muse = skip_muse
 
     def run_all(self, progress: Dict[int, Dict[int, List[int]]] = None):
         if progress is None:
@@ -56,6 +58,9 @@ class Orchestrator:
                           en_model=en_model, cz_model=cz_model,
                           model_config=self.model_config,
                           root_path=self.root_path)
+        if self.skip_muse:
+            print("Skipping aligning vectors for now")
+            return
         muse_model.run_adversarial()
         Evaluator(muse_model).all_tests(self.en_words, self.cz_words)
 
