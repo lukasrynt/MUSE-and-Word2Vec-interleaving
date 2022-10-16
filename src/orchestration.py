@@ -5,7 +5,7 @@ from typing import List, Dict
 import pandas as pd
 
 from .constants import MODELS_PATH, DATA_PATH
-from .evaluation import Evaluator
+from .model.evaluation import Evaluator
 from .model.word2vec import W2V
 from .model.muse import MUSE
 from .utils import form_model_name, rooted_path

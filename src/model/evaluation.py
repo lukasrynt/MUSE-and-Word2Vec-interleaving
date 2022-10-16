@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.model.word2vec import W2V
+from .word2vec import W2V
 from typing import List
 
 
@@ -48,7 +48,7 @@ class Evaluator:
         for i in range(len(en_words)):
             most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=max_k)
             total_score += self.__get_relevance_score(most_similar, cz_words[i])
-        return total_score / len(en_words)
+        return total_score / len(en_words) * 100
 
     def p_at_k_metric(self, en_words: List[str], cz_words: List[str], k: int = 5) -> float:
         """
@@ -68,7 +68,7 @@ class Evaluator:
             most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=k)
             if cz_words[i] in most_similar['token'].unique():
                 success_count += 1
-        return success_count / len(en_words)
+        return success_count / len(en_words) * 100
 
     def __get_relevance_score(self, most_similar: pd.DataFrame, translation: str) -> float:
         l_val = self.__find_in_list(most_similar['token'].tolist(), translation)
