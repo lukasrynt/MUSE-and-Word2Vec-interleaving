@@ -23,7 +23,7 @@ def form_model_name(**model_config) -> str:
     :return:
     """
     w2v_type = 'sg' if model_config['sg'] else 'cbow'
-    return f'{w2v_type}_{model_config["window"]}x{model_config["vector_size"]}'
+    return f'{w2v_type}{model_config["window"]}x{model_config["vector_size"]}'
 
 
 def rooted_path(function):

@@ -104,7 +104,9 @@ class MUSE(W2V):
         if not Path(self.__get_aligned_emb_path('cz')).exists() \
                 or not Path(self.__get_aligned_emb_path('en')).exists():
             cz_emb_path, en_emb_path = self.__get_monolingual_embeddings()
-            shutil.rmtree(Path(self.__get_aligned_emb_dir_path()))
+            path = Path(self.__get_aligned_emb_dir_path())
+            if path.exists():
+                shutil.rmtree(path)
             os.system(f"""python {self.__muse_exec_path()}\
                             --cuda False --n_refinement 0\
                             --dis_most_frequent 0\
@@ -142,7 +144,7 @@ class MUSE(W2V):
         return os.path.join(self.__get_unaligned_emb_dir_path(), f'{language}.txt')
 
     def __get_aligned_emb_path(self, language: str) -> str:
-        return os.path.join(self.__get_aligned_emb_dir_path(), f'{language}.txt')
+        return os.path.join(self.__get_aligned_emb_dir_path(), f'vectors-{language}.txt')
 
     @rooted_path
     def __get_aligned_emb_dir_path(self) -> str:
