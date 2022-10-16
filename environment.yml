@@ -15,3 +15,6 @@ dependencies:
     - faiss-cpu
     - jupyter
     - notebook
+    - bs4
+    - requests
+    - nltk
