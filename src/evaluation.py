@@ -12,6 +12,7 @@ class Evaluator:
     def all_tests(self, en_words: List[str], cz_words: List[str]) -> None:
         en_words = self.__prefix_words(en_words, 'en')
         cz_words = self.__prefix_words(cz_words, 'cz')
+        success_1 = 0
         success_5 = 0
         success_10 = 0
         for i in range(len(en_words)):
@@ -20,7 +21,10 @@ class Evaluator:
                 success_10 += 1
             if cz_words[i] in most_similar['token'].head(5).unique():
                 success_5 += 1
+            if cz_words[i] in most_similar['token'].head(1).unique():
+                success_1 += 1
 
+        print("P@1: ", success_1 / len(en_words))
         print("P@5: ", success_5 / len(en_words))
         print("P@10:", success_10 / len(en_words))
 
