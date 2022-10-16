@@ -58,10 +58,10 @@ class Orchestrator:
                           en_model=en_model, cz_model=cz_model,
                           model_config=self.model_config,
                           root_path=self.root_path)
-        muse_model.run_adversarial(skip_new=True)
         if self.skip_muse:
             print("Skipping adversarial training")
             return
+        muse_model.run_adversarial()
         Evaluator(muse_model).all_tests(self.en_words, self.cz_words)
 
     @staticmethod
@@ -103,6 +103,7 @@ class Orchestrator:
 
     def __log_model_params(self, model_type: str):
         w2v_type_name = 'Skip-Gram' if self.model_config['sg'] else 'CBOW'
+        print('-' * 30)
         print('-' * 30)
         print(model_type.upper())
         print(f'Context window: {self.model_config["window"]}')
