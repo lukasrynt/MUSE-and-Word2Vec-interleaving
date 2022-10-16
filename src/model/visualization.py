@@ -4,8 +4,8 @@ import plotly.express as px
 from scipy.spatial import distance
 from typing import List
 
-from src.models import W2V
-from src.utils import series_to_arr
+from .word2vec import W2V
+from ..utils import series_to_arr
 
 
 class Visualizer:

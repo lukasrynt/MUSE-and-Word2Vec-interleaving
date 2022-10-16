@@ -6,7 +6,8 @@ import pandas as pd
 
 from .constants import MODELS_PATH, DATA_PATH
 from .evaluation import Evaluator
-from .models import W2V, MUSE
+from .model.word2vec import W2V
+from .model.muse import MUSE
 from .utils import form_model_name, rooted_path
 
 

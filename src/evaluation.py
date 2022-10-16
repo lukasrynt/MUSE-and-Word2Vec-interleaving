@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.models import W2V
+from src.model.word2vec import W2V
 from typing import List
 
 
