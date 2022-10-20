@@ -26,14 +26,31 @@ class Orchestrator:
         self.model_config = {}
         self.skip_muse = skip_muse
 
-    def run_all(self, progress: Dict[int, Dict[int, List[int]]] = None):
-        if progress is None:
-            progress = {}
+    def all_stats_df(self) -> pd.DataFrame:
+        all_stats = pd.DataFrame(columns=['Model type', 'W2V type', 'Vector size', 'Context window',
+                                          'P@1', 'P@5', 'P@10', 'Relevance'])
         for vector_size in self.vector_sizes:
             for window_size in self.window_sizes:
                 for sg in [0, 1]:
-                    if self.__resolve_progress(progress, vector_size, window_size, sg):
-                        continue
+                    self.model_config = {
+                        'window': window_size,
+                        'min_count': 3,
+                        'negative': 1,
+                        'sg': sg,
+                        'vector_size': vector_size
+                    }
+                    entry = self.__create_stats_interleaved_entry()
+                    all_stats = self.__append_entry(all_stats, entry)
+
+                    self.model_config['window'] = window_size // 2
+                    entry = self.__create_stats_muse_entry()
+                    all_stats = self.__append_entry(all_stats, entry)
+        return all_stats
+
+    def run_all(self):
+        for vector_size in self.vector_sizes:
+            for window_size in self.window_sizes:
+                for sg in [0, 1]:
                     self.model_config = {
                         'window': window_size,
                         'min_count': 3,
@@ -52,24 +69,50 @@ class Orchestrator:
         Evaluator(interleaved_model).all_tests(self.en_words, self.cz_words)
 
     def train_and_evaluate_muse(self) -> None:
-        en_model = self.__build_w2v_model(model_type='en')
-        cz_model = self.__build_w2v_model(model_type='cz')
-        muse_model = MUSE(epoch_size=self.muse_epoch_size,
-                          epochs=self.muse_epochs,
-                          en_model=en_model, cz_model=cz_model,
-                          model_config=self.model_config,
-                          root_path=self.root_path)
+        muse_model = self.__build_muse_model()
         if self.skip_muse:
             print("Skipping adversarial training")
             return
         muse_model.run_adversarial()
         Evaluator(muse_model).all_tests(self.en_words, self.cz_words)
 
+    def __build_muse_model(self) -> MUSE:
+        en_model = self.__build_w2v_model(model_type='en')
+        cz_model = self.__build_w2v_model(model_type='cz')
+        return MUSE(epoch_size=self.muse_epoch_size,
+                    epochs=self.muse_epochs,
+                    en_model=en_model, cz_model=cz_model,
+                    model_config=self.model_config,
+                    root_path=self.root_path)
+
+    def __create_stats_interleaved_entry(self) -> pd.DataFrame:
+        evaluator = Evaluator(self.__build_w2v_model(model_type='interleaved'))
+        return pd.DataFrame.from_dict({
+            'Model type': 'Interleaved',
+            **self.__common_stats_dict(evaluator),
+        })
+
+    def __create_stats_muse_entry(self) -> pd.DataFrame:
+        evaluator = Evaluator(self.__build_muse_model())
+        return pd.DataFrame.from_dict({
+            'Model type': 'MUSE',
+            **self.__common_stats_dict(evaluator),
+        })
+
+    def __common_stats_dict(self, evaluator: Evaluator) -> Dict:
+        return {
+            'W2V type': 'Skip-Gram' if self.model_config['sg'] else 'CBOW',
+            'Vector size': self.model_config['vector_size'],
+            'Context window': self.model_config['window'],
+            'P@1': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=1),
+            'P@5': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=5),
+            'P@10': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=10),
+            'Relevance': evaluator.relevance_metric(self.en_words, self.cz_words),
+        }
+
     @staticmethod
-    def __resolve_progress(progress: Dict[int, Dict[int, List[int]]], *args) -> bool:
-        return progress.get(args[0], False) and \
-               progress[args[0]].get(args[1], False) and \
-               args[2] in progress[args[0]][args[1]]
+    def __append_entry(stats: pd.DataFrame, entry: pd.DataFrame) -> pd.DataFrame:
+        return stats.concat([stats, entry], ignore_index=True)
 
     def __build_w2v_model(self, model_type: str) -> W2V:
         path = self.__get_model_path(model_type)

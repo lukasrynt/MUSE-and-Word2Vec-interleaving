@@ -21,7 +21,7 @@ class Visualizer:
         :param perplexity: Perplexity of t-SNE dimensionality reduction
         :param limit: Number of tokens take from each language
         """
-        reduced_df = self.__most_frequent_representations(limit)
+        reduced_df = self.most_frequent_representations(limit)
         representations = self.__tsne_reduce(reduced_df, perplexity)
         self.__visualize(representations)
 
@@ -44,7 +44,7 @@ class Visualizer:
         """
         return series_to_arr(tokens, col=col).explode().value_counts().index.to_list()
 
-    def __most_frequent_representations(self, limit: int = 1000):
+    def most_frequent_representations(self, limit: int = 1000):
         """
         Creates representations from the given W2V model reduced by the most frequent tokens in the collection
         :param limit: Number of tokens take from each language

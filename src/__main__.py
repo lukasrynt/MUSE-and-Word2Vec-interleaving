@@ -12,7 +12,7 @@ cz_words = ['přístup', 'povolen', 'kapitál', 'výbor', 'spotřebitel', 'obsah
 def main():
     orch = Orchestrator(en_words=en_words, cz_words=cz_words,
                         muse_epoch_size=1, muse_epochs=5000,
-                        vector_sizes=[300], window_sizes=[6])
+                        vector_sizes=[300], window_sizes=[6], root_path='../')
     orch.run_all()
 
 

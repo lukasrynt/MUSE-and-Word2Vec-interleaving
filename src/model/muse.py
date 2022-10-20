@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Tuple
 
 import pandas as pd
+from gensim.models import Word2Vec
 
 from .word2vec import W2V
 from ..constants import EMBEDDINGS_PATH, MUSE_EXEC_PATH
@@ -22,6 +23,7 @@ class MUSE(W2V):
         self.epochs = epochs
         self.en_model = en_model
         self.cz_model = cz_model
+        self.model = Word2Vec(**model_config)
 
     def run_adversarial(self) -> None:
         if not Path(self.__get_aligned_emb_path('cz')).exists() \
@@ -44,6 +46,7 @@ class MUSE(W2V):
         cz_aligned, en_aligned = self.__load_aligned_embeddings()
         self.__append_vectors(en_aligned, self.model_config['vector_size'])
         self.__append_vectors(cz_aligned, self.model_config['vector_size'])
+        self.model.wv.fill_norms(force=True)
 
     def __get_monolingual_embeddings(self) -> Tuple[str, str]:
         cz_emb_path = self.__get_unaligned_emb_path('cz')
@@ -55,7 +58,7 @@ class MUSE(W2V):
         return cz_emb_path, en_emb_path
 
     def __append_vectors(self, vectors: pd.DataFrame, vector_size: int) -> None:
-        self.model.wv.add_vectors(vectors[0].tolist(), vectors[range(1, vector_size + 1)].to_numpy())
+        self.model.wv.add_vectors(vectors[0].tolist(), vectors[range(1, vector_size + 1)].to_numpy(), replace=True)
 
     def __load_aligned_embeddings(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         cz_aligned = pd.read_csv(self.__get_aligned_emb_path('cz'), sep=' ', skiprows=1, header=None)

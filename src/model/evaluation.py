@@ -17,7 +17,7 @@ class Evaluator:
         success_10 = 0
         relevance = 0
         for i in range(len(en_words)):
-            most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=10)
+            most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=10)
             if cz_words[i] in most_similar['token'].unique():
                 success_10 += 1
             if cz_words[i] in most_similar['token'].head(5).unique():
@@ -46,7 +46,7 @@ class Evaluator:
         cz_words = self.__prefix_words(cz_words, 'cz')
         total_score = 0
         for i in range(len(en_words)):
-            most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=max_k)
+            most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=max_k)
             total_score += self.__get_relevance_score(most_similar, cz_words[i])
         return total_score / len(en_words) * 100
 
@@ -65,7 +65,7 @@ class Evaluator:
         cz_words = self.__prefix_words(cz_words, 'cz')
         success_count = 0
         for i in range(len(en_words)):
-            most_similar = self.__get_most_similar_for(en_words[i], 'cz', top_k=k)
+            most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=k)
             if cz_words[i] in most_similar['token'].unique():
                 success_count += 1
         return success_count / len(en_words) * 100
@@ -84,7 +84,7 @@ class Evaluator:
                 return i
         return -1
 
-    def __get_most_similar_for(self, word: str, language: str, top_k: int) -> pd.DataFrame:
+    def get_most_similar_for(self, word: str, language: str, top_k: int) -> pd.DataFrame:
         """
         Gets k most similar words in other language
         :param word: Word in one language to be found
@@ -94,8 +94,10 @@ class Evaluator:
         """
         size = 0
         df = pd.DataFrame()
+        it = 0
         while size < top_k:
-            df = pd.DataFrame(self.model.most_similar(word=word, topn=top_k * (2 + size)), columns=['token', 'dist'])
+            it += 1
+            df = pd.DataFrame(self.model.most_similar(word=word, topn=top_k * (2 + it + size)), columns=['token', 'dist'])
             df = df[df['token'].str.contains(f'{language}_')]
             size = df.size
         return df.head(top_k)
