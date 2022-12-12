@@ -6,8 +6,10 @@ from typing import List
 
 class Evaluator:
 
-    def __init__(self, model: W2V):
+    def __init__(self, model: W2V, use_prefix: bool = False, verbose: bool = False):
         self.model = model
+        self.use_prefix = use_prefix
+        self.verbose = verbose
 
     def all_tests(self, en_words: List[str], cz_words: List[str]) -> None:
         en_words = self.__prefix_words(en_words, 'en')
@@ -17,6 +19,7 @@ class Evaluator:
         success_10 = 0
         relevance = 0
         for i in range(len(en_words)):
+            self.__log_progress(i + 1, len(en_words))
             most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=10)
             if cz_words[i] in most_similar['token'].unique():
                 success_10 += 1
@@ -42,10 +45,12 @@ class Evaluator:
         :param max_k:
         :return:
         """
-        en_words = self.__prefix_words(en_words, 'en')
-        cz_words = self.__prefix_words(cz_words, 'cz')
+        if self.use_prefix:
+            en_words = self.__prefix_words(en_words, 'en')
+            cz_words = self.__prefix_words(cz_words, 'cz')
         total_score = 0
         for i in range(len(en_words)):
+            self.__log_progress(i + 1, len(en_words))
             most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=max_k)
             total_score += self.__get_relevance_score(most_similar, cz_words[i])
         return total_score / len(en_words) * 100
@@ -61,10 +66,12 @@ class Evaluator:
         :param k:
         :return:
         """
-        en_words = self.__prefix_words(en_words, 'en')
-        cz_words = self.__prefix_words(cz_words, 'cz')
+        if self.use_prefix:
+            en_words = self.__prefix_words(en_words, 'en')
+            cz_words = self.__prefix_words(cz_words, 'cz')
         success_count = 0
         for i in range(len(en_words)):
+            self.__log_progress(i + 1, len(en_words))
             most_similar = self.get_most_similar_for(en_words[i], 'cz', top_k=k)
             if cz_words[i] in most_similar['token'].unique():
                 success_count += 1
@@ -105,3 +112,8 @@ class Evaluator:
     @staticmethod
     def __prefix_words(words: List[str], language: str) -> List[str]:
         return [f'{language}_{word}' for word in words]
+
+    def __log_progress(self, curr: int, total: int):
+        if not self.verbose:
+            return
+        print(f'Word {curr}/{total}', end='\r', flush=True)

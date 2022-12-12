@@ -7,7 +7,7 @@ import pandas as pd
 from gensim.models import Word2Vec
 
 from .word2vec import W2V
-from ..constants import EMBEDDINGS_PATH, MUSE_EXEC_PATH
+from ..constants import EMBEDDINGS_PATH, MUSE_EXEC_SUPERVISED_PATH, MUSE_EXEC_UNSUPERVISED_PATH
 from ..utils import form_model_name, rooted_path
 
 
@@ -15,8 +15,8 @@ class MUSE(W2V):
 
     def __init__(self, en_model: W2V, cz_model: W2V,
                  model_config: dict, epoch_size: int = 1_000_000,
-                 epochs: int = 5, root_path: str = './'):
-        super().__init__()
+                 epochs: int = 5, root_path: str = './', supervised: bool = False):
+        super().__init__(**model_config)
         self.root_path = root_path
         self.model_config = model_config
         self.epoch_size = epoch_size
@@ -24,6 +24,7 @@ class MUSE(W2V):
         self.en_model = en_model
         self.cz_model = cz_model
         self.model = Word2Vec(**model_config)
+        self.supervised = supervised
 
     def run_adversarial(self) -> None:
         if not Path(self.__get_aligned_emb_path('cz')).exists() \
@@ -32,21 +33,37 @@ class MUSE(W2V):
             path = Path(self.__get_aligned_emb_dir_path())
             if path.exists():
                 shutil.rmtree(path)
-            os.system(f"""python {self.__muse_exec_path()}\
-                            --cuda False --n_refinement 0\
-                            --dis_most_frequent 0\
-                            --src_emb {cz_emb_path} --src_lang cz\
-                            --tgt_emb {en_emb_path} --tgt_lang en\
-                            --emb_dim {self.model_config['vector_size']}\
-                            --exp_path {self.__export_root_path()}\
-                            --exp_name muse\
-                            --exp_id {self.__form_model_name()}\
-                            --epoch_size {self.epoch_size}\
-                            --n_epochs {self.epochs}""")
+            if self.supervised:
+                self.__run_supervised(cz_emb_path, en_emb_path)
+            else:
+                self.__run_unsupervised(cz_emb_path, en_emb_path)
         cz_aligned, en_aligned = self.__load_aligned_embeddings()
         self.__append_vectors(en_aligned, self.model_config['vector_size'])
         self.__append_vectors(cz_aligned, self.model_config['vector_size'])
         self.model.wv.fill_norms(force=True)
+
+    def __run_unsupervised(self, cz_emb_path, en_emb_path):
+        os.system(f"""python {self.__muse_exec_path()}\
+                        --cuda False --n_refinement 5\
+                        --dis_most_frequent 7500\
+                        --tgt_emb {cz_emb_path} --tgt_lang cz\
+                        --src_emb {en_emb_path} --src_lang en\
+                        --emb_dim {self.model_config['vector_size']}\
+                        --exp_path {self.__export_root_path()}\
+                        --exp_name unsupervised\
+                        --exp_id {self.__form_model_name()}\
+                        --epoch_size {self.epoch_size}\
+                        --n_epochs {self.epochs}""")
+
+    def __run_supervised(self, cz_emb_path, en_emb_path):
+        os.system(f"""python {self.__muse_exec_path()}\
+                        --cuda False --n_refinement 1\
+                        --tgt_emb {cz_emb_path} --tgt_lang cz\
+                        --src_emb {en_emb_path} --src_lang en\
+                        --emb_dim {self.model_config['vector_size']}\
+                        --exp_path {self.__export_root_path()}\
+                        --exp_name supervised\
+                        --exp_id {self.__form_model_name()}""")
 
     def __get_monolingual_embeddings(self) -> Tuple[str, str]:
         cz_emb_path = self.__get_unaligned_emb_path('cz')
@@ -74,7 +91,8 @@ class MUSE(W2V):
 
     @rooted_path
     def __get_aligned_emb_dir_path(self) -> str:
-        return os.path.join(EMBEDDINGS_PATH, 'muse', self.__form_model_name())
+        path = 'supervised' if self.supervised else 'unsupervised'
+        return os.path.join(EMBEDDINGS_PATH, path, self.__form_model_name())
 
     @rooted_path
     def __get_unaligned_emb_dir_path(self) -> str:
@@ -82,7 +100,10 @@ class MUSE(W2V):
 
     @rooted_path
     def __muse_exec_path(self) -> str:
-        return os.path.join(MUSE_EXEC_PATH)
+        if self.supervised:
+            return MUSE_EXEC_SUPERVISED_PATH
+        else:
+            return MUSE_EXEC_UNSUPERVISED_PATH
 
     @rooted_path
     def __export_root_path(self) -> str:
