@@ -12,8 +12,9 @@ class Evaluator:
         self.verbose = verbose
 
     def all_tests(self, en_words: List[str], cz_words: List[str]) -> None:
-        en_words = self.__prefix_words(en_words, 'en')
-        cz_words = self.__prefix_words(cz_words, 'cz')
+        if self.use_prefix:
+            en_words = self.__prefix_words(en_words, 'en')
+            cz_words = self.__prefix_words(cz_words, 'cz')
         success_1 = 0
         success_5 = 0
         success_10 = 0

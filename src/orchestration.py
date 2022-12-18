@@ -43,7 +43,9 @@ class Orchestrator:
                     all_stats = self.__append_entry(all_stats, entry)
 
                     self.model_config['window'] = window_size // 2
-                    entry = self.__create_stats_muse_entry()
+                    entry = self.__create_stats_muse_entry(supervised=True)
+                    all_stats = self.__append_entry(all_stats, entry)
+                    entry = self.__create_stats_muse_entry(supervised=False)
                     all_stats = self.__append_entry(all_stats, entry)
         return all_stats
 
@@ -62,42 +64,48 @@ class Orchestrator:
                     self.train_and_evaluate_interleaved()
                     self.model_config['window'] = window_size // 2
                     self.__log_model_params(model_type='MUSE')
-                    self.train_and_evaluate_muse()
+                    print('Supervised')
+                    self.train_and_evaluate_muse(supervised=True)
+                    print('Unsupervised')
+                    self.train_and_evaluate_muse(supervised=False)
 
     def train_and_evaluate_interleaved(self) -> None:
         interleaved_model = self.__build_w2v_model(model_type='interleaved')
         Evaluator(interleaved_model).all_tests(self.en_words, self.cz_words)
 
-    def train_and_evaluate_muse(self) -> None:
-        muse_model = self.__build_muse_model()
+    def train_and_evaluate_muse(self, supervised) -> None:
+        muse_model = self.__build_muse_model(supervised)
         if self.skip_muse:
             print("Skipping adversarial training")
             return
         muse_model.run_adversarial()
         Evaluator(muse_model).all_tests(self.en_words, self.cz_words)
 
-    def __build_muse_model(self) -> MUSE:
+    def __build_muse_model(self, supervised) -> MUSE:
         en_model = self.__build_w2v_model(model_type='en')
         cz_model = self.__build_w2v_model(model_type='cz')
         return MUSE(epoch_size=self.muse_epoch_size,
                     epochs=self.muse_epochs,
                     en_model=en_model, cz_model=cz_model,
                     model_config=self.model_config,
-                    root_path=self.root_path)
+                    root_path=self.root_path,
+                    supervised=supervised)
 
     def __create_stats_interleaved_entry(self) -> pd.DataFrame:
         evaluator = Evaluator(self.__build_w2v_model(model_type='interleaved'))
-        return pd.DataFrame.from_dict({
+        return pd.DataFrame([{
             'Model type': 'Interleaved',
             **self.__common_stats_dict(evaluator),
-        })
+        }])
 
-    def __create_stats_muse_entry(self) -> pd.DataFrame:
-        evaluator = Evaluator(self.__build_muse_model())
-        return pd.DataFrame.from_dict({
-            'Model type': 'MUSE',
+    def __create_stats_muse_entry(self, supervised) -> pd.DataFrame:
+        muse_model = self.__build_muse_model(supervised)
+        muse_model.run_adversarial()
+        evaluator = Evaluator(muse_model)
+        return pd.DataFrame([{
+            'Model type': 'MUSE ' + ('supervised' if supervised else 'unsupervised'),
             **self.__common_stats_dict(evaluator),
-        })
+        }])
 
     def __common_stats_dict(self, evaluator: Evaluator) -> Dict:
         return {
@@ -107,12 +115,12 @@ class Orchestrator:
             'P@1': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=1),
             'P@5': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=5),
             'P@10': evaluator.p_at_k_metric(self.en_words, self.cz_words, k=10),
-            'Relevance': evaluator.relevance_metric(self.en_words, self.cz_words),
+            'Relevance': round(evaluator.relevance_metric(self.en_words, self.cz_words), 2)
         }
 
     @staticmethod
     def __append_entry(stats: pd.DataFrame, entry: pd.DataFrame) -> pd.DataFrame:
-        return stats.concat([stats, entry], ignore_index=True)
+        return pd.concat([stats, entry], ignore_index=True)
 
     def __build_w2v_model(self, model_type: str) -> W2V:
         path = self.__get_model_path(model_type)
